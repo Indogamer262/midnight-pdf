@@ -1,0 +1,11 @@
+{
+    "project": "MidnightPDF",
+    "author": "Midnight Core Team",
+    "version": "1.0.0",
+    "settings": {
+        "theme": "midnight-dark",
+        "autoExpand": false,
+        "enableSound": true,
+        "supportedFormats": ["pdf", "png", "jpg", "mp4", "mp3", "code"]
+    }
+}

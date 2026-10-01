@@ -272,6 +272,8 @@ function stream_file_with_range(string $filePath, bool $isDownload = false): voi
         ob_end_clean();
     }
 
+    @set_time_limit(0);
+    header('X-Accel-Buffering: no'); // Disable FastCGI buffering for large streaming
     header('Accept-Ranges: bytes');
     header('Content-Type: ' . $mime);
 
@@ -1700,7 +1702,7 @@ $initialStats = compute_stats($initialTree);
             </button>
 
             <!-- Brand Logo -->
-            <a href="MidnightPDF.php" class="brand-badge" title="MidnightPDF Home">
+            <a href="./" class="brand-badge" title="MidnightPDF Home">
                 <div class="brand-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -2070,6 +2072,9 @@ $initialStats = compute_stats($initialTree);
         // Configure PDF.js Worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+        // Dynamic script URL (automatically handles index.php, MidnightPDF.php, or custom filename)
+        const SCRIPT_URL = <?php echo json_encode(basename($_SERVER['SCRIPT_NAME'] ?? 'index.php')); ?>;
+
         // Preloaded Initial Tree & Stats from PHP
         window.INITIAL_TREE = <?php echo json_encode($initialTree, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
         window.INITIAL_STATS = <?php echo json_encode($initialStats, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
@@ -2366,7 +2371,7 @@ $initialStats = compute_stats($initialTree);
 
         async function refreshTreeData() {
             try {
-                const res = await fetch('MidnightPDF.php?action=tree');
+                const res = await fetch(`${SCRIPT_URL}?action=tree`);
                 const data = await res.json();
                 if (data.success) {
                     state.tree = data.tree;
@@ -2494,8 +2499,8 @@ $initialStats = compute_stats($initialTree);
             el.headerBreadcrumb.innerHTML = breadcrumbHtml;
 
             // Enable Header buttons
-            const rawUrl = `MidnightPDF.php?action=raw&file=${encodeURIComponent(file.path)}`;
-            const downloadUrl = `MidnightPDF.php?action=download&file=${encodeURIComponent(file.path)}`;
+            const rawUrl = `${SCRIPT_URL}?action=raw&file=${encodeURIComponent(file.path)}`;
+            const downloadUrl = `${SCRIPT_URL}?action=download&file=${encodeURIComponent(file.path)}`;
 
             el.btnHeaderDownload.classList.remove('disabled');
             el.btnHeaderDownload.setAttribute('href', downloadUrl);
@@ -2512,7 +2517,7 @@ $initialStats = compute_stats($initialTree);
             el.pdfLoadingOverlay.classList.add('active');
             el.pdfCanvasContainer.innerHTML = '';
 
-            const url = `MidnightPDF.php?action=raw&file=${encodeURIComponent(file.path)}`;
+            const url = `${SCRIPT_URL}?action=raw&file=${encodeURIComponent(file.path)}`;
 
             try {
                 if (state.pdf.doc) {
@@ -2547,7 +2552,7 @@ $initialStats = compute_stats($initialTree);
                     <div style="padding: 40px; text-align: center; color: var(--accent-pdf);">
                         <p><strong>Gagal memuat dokumen PDF.</strong></p>
                         <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 8px;">File mungkin rusak atau tidak dapat diakses.</p>
-                        <a href="MidnightPDF.php?action=download&file=${encodeURIComponent(file.path)}" class="btn-download-action" style="margin-top: 14px; display: inline-flex;">Unduh File PDF</a>
+                        <a href="${SCRIPT_URL}?action=download&file=${encodeURIComponent(file.path)}" class="btn-download-action" style="margin-top: 14px; display: inline-flex;">Unduh File PDF</a>
                     </div>
                 `;
             } finally {
@@ -2687,7 +2692,7 @@ $initialStats = compute_stats($initialTree);
             el.imageElement.style.transform = `scale(1.0)`;
             el.imageMetaDimensions.textContent = `Memuat ${file.name}...`;
 
-            const url = `MidnightPDF.php?action=raw&file=${encodeURIComponent(file.path)}`;
+            const url = `${SCRIPT_URL}?action=raw&file=${encodeURIComponent(file.path)}`;
             el.imageElement.src = url;
 
             el.imageElement.onload = () => {
@@ -2729,7 +2734,7 @@ $initialStats = compute_stats($initialTree);
         // -------------------------------------------------------------
         function loadVideoViewer(file) {
             el.videoViewerContainer.classList.add('active');
-            const url = `MidnightPDF.php?action=raw&file=${encodeURIComponent(file.path)}`;
+            const url = `${SCRIPT_URL}?action=raw&file=${encodeURIComponent(file.path)}`;
             el.videoElement.src = url;
             el.videoElement.load();
             el.videoElement.play().catch(() => {});
@@ -2743,7 +2748,7 @@ $initialStats = compute_stats($initialTree);
             el.audioTrackTitle.textContent = file.name;
             el.audioTrackPath.textContent = file.path;
 
-            const url = `MidnightPDF.php?action=raw&file=${encodeURIComponent(file.path)}`;
+            const url = `${SCRIPT_URL}?action=raw&file=${encodeURIComponent(file.path)}`;
             el.audioElement.src = url;
             el.audioElement.load();
             el.audioElement.play().catch(() => {});
@@ -2772,7 +2777,7 @@ $initialStats = compute_stats($initialTree);
             el.codeLineNumbers.innerHTML = '1';
 
             try {
-                const res = await fetch(`MidnightPDF.php?action=text&file=${encodeURIComponent(file.path)}`);
+                const res = await fetch(`${SCRIPT_URL}?action=text&file=${encodeURIComponent(file.path)}`);
                 const data = await res.json();
                 if (data.success) {
                     el.codeBlock.textContent = data.content;
@@ -2821,7 +2826,7 @@ $initialStats = compute_stats($initialTree);
             el.unsupSize.textContent = file.sizeFormatted;
             el.unsupExt.textContent = (file.ext || 'UNKNOWN').toUpperCase();
 
-            const downloadUrl = `MidnightPDF.php?action=download&file=${encodeURIComponent(file.path)}`;
+            const downloadUrl = `${SCRIPT_URL}?action=download&file=${encodeURIComponent(file.path)}`;
             el.btnUnsupportedDownload.setAttribute('href', downloadUrl);
             el.btnUnsupportedDownload.setAttribute('download', file.name);
         }
